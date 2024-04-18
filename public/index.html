@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Room Chat</title>
+</head>
+<body>
+  <h1>Room Chat</h1>
+  <div id="log"></div>
+  <p>Number of users: <span id="numUsers">0</span></p>
+  <video id="remoteVideo" autoplay></video>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    socket.on("userId", (userId) => {
+      console.log("Received User ID:", userId);
+    });
+
+    socket.on("numUsers", (numUsers) => {
+      const numUsersSpan = document.getElementById("numUsers");
+      numUsersSpan.textContent = numUsers;
+    });
+
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        const remoteVideo = document.getElementById("remoteVideo");
+        remoteVideo.srcObject = stream;
+
+        socket.emit("stream", stream);
+
+        socket.on("stream", ({ userId, stream }) => {
+          console.log("Received stream from user:", userId);
+          const logDiv = document.getElementById("log");
+          logDiv.innerHTML += `<p>User ${userId} joined the room.</p>`;
+        });
+      })
+      .catch((err) => {
+        console.error("Error accessing camera and microphone:", err);
+      });
+  </script>
+</body>
+</html>

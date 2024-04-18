@@ -1,0 +1,14 @@
+{
+    "name": "your-app-name",
+    "type": "node",
+    "build": {
+      "env": {
+        "NODE_ENV": "production"
+      }
+    },
+    "deploy": {
+      "branch": "main",
+      "script": "npm start"
+    }
+  }
+  
