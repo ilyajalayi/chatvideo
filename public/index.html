@@ -3,42 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Room Chat</title>
+  <title>Voice Chat</title>
 </head>
 <body>
-  <h1>Room Chat</h1>
+  <h1>Voice Chat</h1>
   <div id="log"></div>
-  <p>Number of users: <span id="numUsers">0</span></p>
-  <video id="remoteVideo" autoplay></video>
-
+  <audio id="audioPlayer" controls></audio>
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
-    socket.on("userId", (userId) => {
-      console.log("Received User ID:", userId);
-    });
-
-    socket.on("numUsers", (numUsers) => {
-      const numUsersSpan = document.getElementById("numUsers");
-      numUsersSpan.textContent = numUsers;
-    });
-
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    navigator.mediaDevices.getUserMedia({ audio: true })
       .then((stream) => {
-        const remoteVideo = document.getElementById("remoteVideo");
-        remoteVideo.srcObject = stream;
+        const audioPlayer = document.getElementById("audioPlayer");
+        audioPlayer.srcObject = stream;
 
-        socket.emit("stream", stream);
+        const mediaRecorder = new MediaRecorder(stream);
 
-        socket.on("stream", ({ userId, stream }) => {
-          console.log("Received stream from user:", userId);
-          const logDiv = document.getElementById("log");
-          logDiv.innerHTML += `<p>User ${userId} joined the room.</p>`;
+        mediaRecorder.ondataavailable = (e) => {
+          socket.emit("voice", e.data);
+        };
+
+        mediaRecorder.start();
+
+        socket.on("voice", (data) => {
+          const blob = new Blob([data], { type: "audio/ogg; codecs=opus" });
+          const audioUrl = URL.createObjectURL(blob);
+          audioPlayer.src = audioUrl;
         });
       })
       .catch((err) => {
-        console.error("Error accessing camera and microphone:", err);
+        console.error("Error accessing microphone:", err);
       });
   </script>
 </body>

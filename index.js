@@ -7,38 +7,30 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-let numUsers = 0; // تعداد افراد حاضر در روم
-
+// استفاده از فایل‌های استاتیک برای فرانت‌اند (HTML، CSS، JS و ...)
 app.use(express.static(path.join(__dirname, "public")));
 
+// مسیر صفحه اصلی
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public/index.html"));
 });
 
+// اتصال به سوکت‌ها
 io.on("connection", (socket) => {
   console.log("A user connected");
-  numUsers++;
-  updateNumUsers();
 
-  const userId = Math.random().toString(36).substr(2, 9);
-  console.log("User ID:", userId);
-  socket.emit("userId", userId);
-
-  socket.on("stream", (stream) => {
-    socket.broadcast.emit("stream", { userId, stream });
+  // دریافت و ارسال پیام‌های صوتی
+  socket.on("voice", (data) => {
+    socket.broadcast.emit("voice", data); // ارسال به تمام کاربران به جز خود کاربر
+    // socket.emit("voice", data); // ارسال به خود کاربر
   });
 
   socket.on("disconnect", () => {
     console.log("User disconnected");
-    numUsers--;
-    updateNumUsers();
   });
 });
 
-const updateNumUsers = () => {
-  io.emit("numUsers", numUsers); // ارسال تعداد افراد به تمام کاربران
-};
-
+// شنود بر روی درگاه 3000
 const PORT = 3000;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
